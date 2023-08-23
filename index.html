@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=0.8, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Comfortaa', Arial, Helvetica, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-weight: bold;
+      background-color: #EDE0C8;
+    }
+    .grid-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 4px;
+    }
+    .cell {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      text-align: center;
+      line-height: 100px;
+      font-size: 36px;
+      user-select: none; /* Prevent text selection */
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+      background-color: #B09B89;
+      color: #000;
+      border-radius: 10px;
+    }
+    .cell.active {
+      background-color: #f0f0f0;
+    }
+    .cell.selected {
+      background-color: #877769;
+      animation: pop 0.1s ease-out;
+    }
+    @keyframes pop {
+      0% {
+        transform: scale(0.95);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* Style for the bottom grid */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 4px;
+      pointer-events: none; /* Disable interaction with the bottom grid */
+    }
+    .bottom-cell {
+      background-color: #cdc1b4;
+      width: 100px;
+      height: 100px;
+      text-align: center;
+      line-height: 100px;
+      font-size: 36px;
+      color: #776e65;
+      border-radius: 10px;
+    }
+
+    #timer {
+      font-size: 24px;
+    }
+
+    .cell.selected.disabled {
+      background-color: #ccc;
+      pointer-events: none; /* Disable interaction with the cell */
+    }
+
+	h1 {
+
+	font-weight: bolder;
+	font-size: 35px;
+      color: #71675F;
+}
+  </style>
+  <title>Matchful</title>
+  <link rel="icon" type="image/x-icon" href="logo.png">
+</head>
+<body>
+  <br>
+  <br>
+  <center><h1><b>MATCHFUL</h1></center></b>
+  <br>
+  <br>
+  <div class="grid-container">
+    <div class="grid">
+      <div class="cell">1</div>
+      <div class="cell">2</div>
+      <div class="cell">3</div>
+      <div class="cell">4</div>
+      <div class="cell">5</div>
+      <div class="cell">6</div>
+      <div class="cell">7</div>
+      <div class="cell">8</div>
+      <div class="cell">9</div>
+      <div class="cell">10</div>
+      <div class="cell">11</div>
+      <div class="cell">12</div>
+    </div>
+    <div class="bottom-grid" id="bottomGrid">
+      <!-- Bottom grid cells will be generated dynamically -->
+    </div>
+  </div>
+  <br>
+  <div id="score">Score: 0</div>
+  <br>
+  <div id="highScore">High Score: 0</div>
+  <br>
+  <div id="timer">20</div>
+  <script>
+    const gridContainer = document.querySelector('.grid-container');
+    const cells = document.querySelectorAll('.cell');
+    const bottomGrid = document.getElementById('bottomGrid');
+    const cellSize = 100;
+    let selectedCell = null;
+    let timer = 20;
+    let score = 0;
+    let highScore = localStorage.getItem('highScore') || 0; // Get the stored high score or default to 0
+    let gameOver = false;
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function generateRandomNumbers(count) {
+      const numbers = Array.from({ length: count }, (_, i) => i + 1);
+      shuffleArray(numbers);
+      return numbers;
+    }
+
+    function populateBottomGrid() {
+      const randomNumbers = generateRandomNumbers(cells.length);
+
+      bottomGrid.innerHTML = '';
+
+      randomNumbers.forEach((number, index) => {
+        const bottomCell = document.createElement('div');
+        bottomCell.className = 'bottom-cell';
+        bottomCell.innerText = number;
+        bottomCell.style.width = `${cellSize}px`;
+        bottomCell.style.height = `${cellSize}px`;
+        bottomGrid.appendChild(bottomCell);
+      });
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('score').textContent = `Score: ${score}`;
+    }
+
+    function updateHighScoreDisplay() {
+      document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = timer;
+    }
+
+    function decrementTimer() {
+    if (timer > 0) {
+      timer--;
+      updateTimerDisplay();
+    } else {
+      clearInterval(timerInterval);
+      document.getElementById('timer').textContent = "Game Over";
+      gameOver = true;
+
+      // Disable interaction with all grid cells
+      cells.forEach(cell => {
+        cell.classList.remove('selected');
+        cell.classList.add('disabled');
+      });
+
+      setTimeout(() => {
+        location.reload();
+      }, 7000);
+    }
+  }
+
+    function resetTimer() {
+      timer = 20;
+      updateTimerDisplay();
+    }
+
+    updateTimerDisplay();
+    const timerInterval = setInterval(decrementTimer, 1000);
+
+    populateBottomGrid();
+
+   cells.forEach(cell => {
+    cell.addEventListener('click', () => {
+      if (!gameOver && timer > 0) { // Only allow cell selection when the timer is running
+        if (!selectedCell) {
+          selectedCell = cell;
+          selectedCell.classList.add('selected', 'pop');
+        } else {
+          if (cell !== selectedCell) {
+            swapCells(selectedCell, cell);
+          }
+          selectedCell.classList.remove('selected');
+          selectedCell = null;
+        }
+      }
+    });
+  });
+
+    function swapCells(cell1, cell2) {
+      const tempText = cell1.innerText;
+
+      cell1.style.opacity = 0;
+      cell2.style.opacity = 0;
+
+      setTimeout(() => {
+        cell1.innerText = cell2.innerText;
+        cell2.innerText = tempText;
+
+        cell1.style.opacity = 1;
+        cell2.style.opacity = 1;
+
+        if (checkGridsMatch()) {
+          gridContainer.classList.add('pop');
+          document.getElementById('bottomGrid').classList.add('pop');
+
+          setTimeout(() => {
+            gridContainer.classList.remove('pop');
+            document.getElementById('bottomGrid').classList.remove('pop');
+
+            score += 12;
+            updateScoreDisplay();
+            if (score > highScore) {
+              highScore = score;
+              localStorage.setItem('highScore', highScore);
+              updateHighScoreDisplay();
+            }
+            resetTimer();
+            populateBottomGrid();
+          }, 300);
+        }
+
+      }, 150);
+
+    }
+
+    function checkGridsMatch() {
+      const topGridNumbers = Array.from(cells).map(cell => parseInt(cell.innerText));
+      const bottomGridNumbers = Array.from(document.querySelectorAll('.bottom-cell')).map(cell => parseInt(cell.innerText));
+      return JSON.stringify(topGridNumbers) === JSON.stringify(bottomGridNumbers);
+    }
+
+    updateScoreDisplay();
+    updateHighScoreDisplay();
+  </script>
+</body>
+</html>
